@@ -1,5 +1,8 @@
 ;;; denote-refs.el --- Show links and backlinks in Denote notes  -*- lexical-binding: t; -*-
 
+
+
+
 ;; Copyright (C) 2022 Akib Azmain Turja.
 
 ;; Author: Akib Azmain Turja <akib@disroot.org>
@@ -80,6 +83,10 @@ the key is the absolute path.")
 (defvar denote-refs--idle-update-timers nil
   "Timer to update references while idle.")
 
+(defun denote-refs--beautify-link (path)
+  "Beautify LINK."
+  (denote-desluggify-title (denote-retrieve-filename-title path)))
+
 (defun denote-refs--render (section)
   "Render SECTION."
   (let ((refs (pcase section
@@ -92,22 +99,22 @@ the key is the absolute path.")
       ;; Insert references count.
       (insert (if (or (eq refs 'not-ready)
                       (eq refs 'error))
-                  (format "# ... %s\n" (if (eq section 'links)
-                                           "links"
-                                         "backlinks"))
-                (format "# %i %s%s\n" (length refs)
+                  (format " ... %s\n" (if (eq section 'links)
+                                           "LINKS"
+                                         "BACKLINKS"))
+                (format "☞ %i %s%s\n" (length refs)
                         (if (eq section 'links)
-                            "jolly good link"
-                          "backlink")
+                            "LINK"
+                          "BACKLINK")
                         (pcase (length refs)
-                          (0 "s")
+                          (0 "S")
                           (1 ":")
-                          (_ "s:")))))
+                          (_ "S:")))))
       ;; Insert reference list.
       (when (listp refs)
         (dolist (ref refs)
-          (insert "#   ")
-          (insert-button (denote-retrieve-filename-title (car ref))
+          (insert " § ")
+          (insert-button (denote-refs--beautify-link (car ref))
                          'help-echo (cdr ref)
                          'face 'denote-faces-link
                          'action (lambda (_)
@@ -181,12 +188,14 @@ the key is the absolute path.")
       (let ((begin (point))
             (inhibit-read-only t))
         (with-silent-modifications
+          (insert "#+begin_comment\n")
           (dolist (section denote-refs-sections)
             (pcase-exhaustive section
               ('links
                (denote-refs--render 'links))
               ('backlinks
                (denote-refs--render 'backlinks))))
+          (insert "#+end_comment\n")
           (put-text-property begin (point) 'read-only t)
           (put-text-property begin (point) 'denote-refs--sections t)
           (insert ?\n))))))
