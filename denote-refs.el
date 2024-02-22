@@ -97,17 +97,17 @@ the key is the absolute path.")
                                          "backlinks"))
                 (format "# %i %s%s\n" (length refs)
                         (if (eq section 'links)
-                            "link"
+                            "jolly good link"
                           "backlink")
                         (pcase (length refs)
-                          (0 "")
+                          (0 "s")
                           (1 ":")
                           (_ "s:")))))
       ;; Insert reference list.
       (when (listp refs)
         (dolist (ref refs)
           (insert "#   ")
-          (insert-button (car ref)
+          (insert-button (denote-retrieve-filename-title (car ref))
                          'help-echo (cdr ref)
                          'face 'denote-faces-link
                          'action (lambda (_)
